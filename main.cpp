@@ -1,44 +1,36 @@
 #include "hpdf.h"
 #include <cstdio>
+#include <sstream> // std::stringstream
 #include <string>
-#include <sstream>      // std::stringstream
-#include <vector>
 
+int main(int, char **) {
+  HPDF_Doc pdf;
+  HPDF_Font font;
+  HPDF_Page page;
+  const char *fname = "demo.pdf";
 
-int main (int argc, char **argv)
-{
-    const char *page_title = "şiçğü deneme";
+  pdf = HPDF_New(nullptr, nullptr);
+  if (!pdf) {
+    printf("error: cannot create PdfDoc object\n");
+    return 1;
+  }
 
-    HPDF_Doc  pdf;
-    HPDF_Font font;
-    HPDF_Page page;
-    const char* fname="demo.pdf";
+  /* set compression mode */
+  HPDF_SetCompressionMode(pdf, HPDF_COMP_ALL);
 
-    float tw;
+  /* create default-font */
+  font = HPDF_GetFont(pdf, "Helvetica", "ISO8859-9");
 
-    pdf = HPDF_New (nullptr, NULL);
-    if (!pdf) {
-        printf ("error: cannot create PdfDoc object\n");
-        return 1;
-    }  
-    
-    /* set compression mode */
-    HPDF_SetCompressionMode (pdf, HPDF_COMP_ALL);
+  /* add a new page object. */
+  page = HPDF_AddPage(pdf);
 
-    /* create default-font */
-    font = HPDF_GetFont (pdf, "Helvetica", "ISO8859-9");
+  /* print the title of the page (with positioning center). */
+  const int fontSize = 12;
+  HPDF_Page_SetFontAndSize(page, font, fontSize);
+  HPDF_Page_SetTextLeading(page, fontSize * 0.55);
 
-    /* add a new page object. */
-    page = HPDF_AddPage (pdf);
-
-
-    /* print the title of the page (with positioning center). */
-    const int fontSize=12;
-    HPDF_Page_SetFontAndSize (page, font, fontSize);
-    HPDF_Page_SetTextLeading(page,fontSize*0.55);
-
-    HPDF_Page_BeginText (page);
-    std::string s =R"(
+  HPDF_Page_BeginText(page);
+  std::string s = R"(
 #
 #  URL http://libharu.org/
 #
@@ -105,28 +97,27 @@ compression and embedding PNG images. (In the case of Windows, static library
 files for several compilers are included in the package for WIndows.  In the 
 case of  most of UNIX, these libraries are usually installed.)
 )";
-    std::stringstream modifiedStr;
+  std::stringstream modifiedStr;
 
-    std::stringstream ss(s);
-    std::string line;
-    while (std::getline(ss, line, '\n')) {
-        
-        for (unsigned i = 0; i < line.length(); i += 85) {
-            modifiedStr << line.substr(i, 85) << "\n";
-        }   
-        modifiedStr << "\n";    
+  std::stringstream ss(s);
+  std::string line;
+  while (std::getline(ss, line, '\n')) {
+    for (unsigned i = 0; i < line.length(); i += 85) {
+      modifiedStr << line.substr(i, 85) << "\n";
     }
-        
+    modifiedStr << "\n";
+  }
 
-    HPDF_Page_TextRect(page, fontSize, fontSize*70, HPDF_Page_TextWidth (page, modifiedStr.str().c_str()), 0, modifiedStr.str().c_str(),
-		       HPDF_TALIGN_LEFT, nullptr);
-    HPDF_Page_EndText (page);
+  HPDF_Page_TextRect(page, fontSize, fontSize * 70,
+                     HPDF_Page_TextWidth(page, modifiedStr.str().c_str()), 0,
+                     modifiedStr.str().c_str(), HPDF_TALIGN_LEFT, nullptr);
+  HPDF_Page_EndText(page);
 
-    /* save the document to a file */
-    HPDF_SaveToFile (pdf, fname);
+  /* save the document to a file */
+  HPDF_SaveToFile(pdf, fname);
 
-    /* clean up */
-    HPDF_Free (pdf);
+  /* clean up */
+  HPDF_Free(pdf);
 
-    return 0;
+  return 0;
 }
